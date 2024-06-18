@@ -51,7 +51,6 @@ def purchase_page(event):
     print(event["nome"])
     concert_info = event["luogo"][0]
     posti = concert_info["posti"]
-    print(f"posti: {posti}")
     categorie_posti = ["vip", "premium", "base"]
     for i, category in enumerate(categorie_posti):
         print(f"{i+1}- posti {category}\n"
