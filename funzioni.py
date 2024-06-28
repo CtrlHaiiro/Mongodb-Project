@@ -82,15 +82,14 @@ def show_avariable_concerts(concerts):
     print(f"concerti disponibili: \n"
           f"{len(concerts)} risultati trovati\n")
     for i, concert in enumerate(concerts):
-        print(
-            f"{i + 1} - {concert["nome"]}  ")
+        #print(f"{i + 1} - {concert["nome"]}  ")
+        print( str(i+1) + " - " + concert["nome"] )
     choice = int(input("\ninserisci il numero del concerto \n"
                        "per visualizzare i dettagli ( 0 per tornare indietro ) : "))
     if choice == 0:
         return search_concert()
     else:
         return choice
-
 
 def search_concert():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -120,6 +119,24 @@ def search_concert():
 def search_artist():
     os.system('cls' if os.name == 'nt' else 'clear')
     print("cerca per artista")
+    query = {}
+    artist = str(input("inserisci il nome del artista/band: ")).capitalize()
+    regex_pattern = re.compile(f".*{re.escape(artist)}.*", re.IGNORECASE)
+
+    query = {"artisti": {"$regex": regex_pattern}}
+    results = list(collection.find(query))
+    if results:
+        choice = show_avariable_concerts(results)
+        view_details(results[choice - 1])
+        choice = int(input("\n0 - indietro\nseleziona una data: \n"))
+        if choice != 0:
+            purchase_page(results[choice])
+        else:
+            return show_avariable_concerts(results)
+    else:
+        print("Nessun artista trovato con questo nome.")
+        time.sleep(2)
+
     time.sleep(1)
 
 
