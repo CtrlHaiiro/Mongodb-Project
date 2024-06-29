@@ -132,7 +132,7 @@ def search_artist():
         if choice != 0:
             purchase_page(results[choice])
         else:
-            return show_avariable_concerts(results)
+            return search_artist()
     else:
         print("Nessun artista trovato con questo nome.")
         time.sleep(2)
