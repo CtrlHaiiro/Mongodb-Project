@@ -1,9 +1,10 @@
 import os
-import random
 import time
+from datetime import datetime
+
+import geojson
 from pymongo import MongoClient
 import re
-import json
 global collection
 
 
@@ -14,6 +15,8 @@ def start_client():
         client = MongoClient("mongodb://localhost:27017/")
         db = client.get_database("Concerti")
         collection = db.get_collection("concerti")
+        collection.create_index([("luogo.coordinate", "2dsphere")])
+
         return collection
     except Exception as e:
         print(f"Errore nella connessione a {e}")
@@ -69,6 +72,10 @@ def purchase_page(event):
         return purchase_page(event)
 
     elif choice == 1:
+        if num_biglietti > len(name_seats):
+            print("nessun biglietto disponibile")
+            time.sleep(2)
+            return purchase_page(event)
         selected_seats = name_seats[:num_biglietti]
         new_list = [x for x in name_seats if x not in selected_seats]
         collection.update_one({"_id": event_id},
@@ -122,7 +129,6 @@ def search_concert():
             purchase_page(results[choice-1])
         else:
             return search_concert()
-
     else:
         print("Nessun concerto trovato con questo nome.")
         time.sleep(2)
@@ -188,7 +194,8 @@ def search_by_date(collection):
 def search_by_distance():
     os.system('cls' if os.name == 'nt' else 'clear')
     print("ricerca per distanza")
-    time.sleep(1)
+
+
 
 
 def exit_program():
