@@ -2,9 +2,9 @@ dnspython==2.6.1
 Faker==25.8.0
 geographiclib==2.0
 geojson==3.1.0
-geopy==2.4.1
 pymongo==4.7.3
 python-dateutil==2.9.0.post0
 setuptools==69.5.1
 six==1.16.0
+wcwidth==0.2.13
 wheel==0.43.0
