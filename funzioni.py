@@ -123,10 +123,35 @@ def search_artist():
     time.sleep(1)
 
 
-def search_by_date():
+def search_by_date(collection):
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("cerca per intervallo di date")
-    time.sleep(1)
+    print("Cerca per data")
+
+    while True:
+        try:
+            data1 = input("Inserisci la prima data per trovare il concerto (Anno-Mese-Giorno): ")
+            data2 = input("Inserisci la seconda data per trovare il concerto (Anno-Mese-Giorno): ")
+            date1 = datetime.strptime(data1, "%Y-%m-%d")
+            date2 = datetime.strptime(data2, "%Y-%m-%d")
+            break
+        except ValueError:
+            print("Errore: formato data non valido. Riprova!")
+
+    query = {"data": {"$gte": date1, "$lte": date2}}
+    results = list(collection.find(query))
+
+    if results:
+        choice = show_avariable_concerts(results)
+        view_details(results[choice - 1])
+        choice = int(input("\n0 - Indietro\nSeleziona una concerto: \n"))
+        if choice!= 0:
+            purchase_page(results[choice - 1])
+        else:
+            time.sleep(1)
+            return search_concert()
+    else:
+        print("Nessun concerto trovato in questo intervallo di date.")
+        time.sleep(2)
 
 
 def search_by_distance():
