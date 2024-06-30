@@ -201,7 +201,7 @@ def search_by_distance():
         location = input("Inserisci la tua posizione attuale (latitudine, longitudine): ").split(',')
         latitude = float(location[0])
         longitude = float(location[1])
-        radius_km = 100  
+        radius_km = 7
         
         concerts = list(collection.find())
 
