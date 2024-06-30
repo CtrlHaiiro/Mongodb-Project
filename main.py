@@ -1,11 +1,9 @@
 import funzioni
 import os
 import time
-from pymongo import MongoClient
-import re
 
 
-def display_menu(coll):
+def display_menu():
     while True:
         try:
             os.system('cls' if os.name == 'nt' else 'clear')
@@ -24,9 +22,9 @@ def display_menu(coll):
                 case 2:
                     funzioni.search_artist()
                 case 3:
-                    funzioni.search_by_date()
-                case 4:
                     funzioni.search_by_distance()
+                case 4:
+                    funzioni.search_by_date()
                 case 0:
                     funzioni.exit_program()
                     break
@@ -44,4 +42,4 @@ def display_menu(coll):
 
 if __name__ == '__main__':
     coll = funzioni.start_client()
-    display_menu(coll)
+    display_menu()
