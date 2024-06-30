@@ -47,7 +47,7 @@ def view_details(event):
 
 def purchase_page(event):
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("purchase_page\n")
+    print("Acquisto biglietti\n")
     print(event["nome"])
     event_id = event["_id"]
     seats = event["luogo"][0]["posti"]
@@ -160,7 +160,7 @@ def search_artist():
     time.sleep(1)
 
 
-def search_by_date(collection):
+def search_by_date():
     os.system('cls' if os.name == 'nt' else 'clear')
     print("Cerca per data")
 
@@ -194,6 +194,42 @@ def search_by_date(collection):
 def search_by_distance():
     os.system('cls' if os.name == 'nt' else 'clear')
     print("ricerca per distanza")
+
+    try:
+        # Prompt user for their latitude and longitude
+        user_lat = float(input("Inserisci la tua latitudine: "))
+        user_lon = float(input("Inserisci la tua longitudine: "))
+        max_distance = float(input("Inserisci la distanza massima in metri: "))  # MongoDB uses meters for geospatial queries
+    except ValueError:
+        print("Inserisci valori numerici validi.")
+        time.sleep(2)
+        return search_by_distance()
+
+    user_location = geojson.Point((user_lon, user_lat))
+
+    query = {
+        "luogo.coordinate": {
+            "$near": {
+                "$geometry": user_location,
+                "$maxDistance": max_distance
+            }
+        }
+    }
+
+    results = list(collection.find(query))
+
+    if results:
+        choice = show_avariable_concerts(results)
+        view_details(results[choice - 1])
+        date_choice = int(input("\n0 - indietro\nseleziona una data: \n"))
+        if date_choice != 0:
+            purchase_page(results[choice - 1])
+        else:
+            return search_by_distance()
+    else:
+        print("Nessun concerto trovato entro la distanza specificata.")
+        time.sleep(2)
+
 
 
 
