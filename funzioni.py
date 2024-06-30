@@ -6,6 +6,8 @@ import geojson
 from pymongo import MongoClient
 import re
 global collection
+from prettytable import PrettyTable
+from geopy.distance import geodesic
 
 
 def start_client():
