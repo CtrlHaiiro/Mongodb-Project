@@ -187,7 +187,7 @@ def search_by_date():
         if date_choice != 0:
             purchase_page(results[choice-1])
         else:
-            return search_concert()
+            return search_by_date()
 
     else:
         print("Nessun concerto trovato in questo intervallo di date.")
