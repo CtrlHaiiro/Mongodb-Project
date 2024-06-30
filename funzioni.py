@@ -193,9 +193,33 @@ def search_by_date():
 
 def search_by_distance():
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("ricerca per distanza")
+    print("Ricerca per distanza")
 
+    try:
+        location = input("Inserisci la tua posizione attuale (latitudine, longitudine): ").split(',')
+        latitude = float(location[0])
+        longitude = float(location[1])
+        radius_km = 100  # Aumentato il raggio di ricerca a 100 km
 
+        concerts = list(collection.find())
+        table = PrettyTable(["ID", "Nome", "Artista", "Data", "Prezzo", "Biglietti Disponibili", "Distanza (km)"])
+
+        for concert in concerts:
+            for place in concert["luogo"]:
+                concert_location = (place["location"]["latitude"], place["location"]["longitude"])
+                user_location = (latitude, longitude)
+                distance = geodesic(concert_location, user_location).km
+                if distance <= radius_km:
+                    table.add_row([str(concert["_id"]), concert["nome"], ', '.join(concert["artisti"]), 
+                                   ', '.join(place["tempo"]["data"]), place["posti"]["prezzo"], 
+                                   place["posti"]["numero_posti"], round(distance, 2)])
+        
+        print(table)
+        time.sleep(2)
+    except Exception as e:
+        print(f"Errore: {e}")
+        time.sleep(2)
+   
 
 
 def exit_program():
