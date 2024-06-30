@@ -202,9 +202,10 @@ def search_by_distance():
         latitude = float(location[0])
         longitude = float(location[1])
         radius_km = 100  
-
+        
         concerts = list(collection.find())
-        table = PrettyTable(["ID", "Nome", "Artista", "Data", "Prezzo", "Biglietti Disponibili", "Distanza (km)"])
+
+        table = PrettyTable(["ID", "Nome", "Artisti", "Data", "Prezzo", "Biglietti Disponibili", "Distanza (km)"])
 
         for concert in concerts:
             for place in concert["luogo"]:
@@ -212,16 +213,22 @@ def search_by_distance():
                 user_location = (latitude, longitude)
                 distance = geodesic(concert_location, user_location).km
                 if distance <= radius_km:
-                    table.add_row([str(concert["_id"]), concert["nome"], ', '.join(concert["artisti"]), 
-                                   ', '.join(place["tempo"]["data"]), place["posti"]["prezzo"], 
-                                   place["posti"]["numero_posti"], round(distance, 2)])
-        
+                    table.add_row([
+                        str(concert["_id"]),
+                        concert["nome"],
+                        ', '.join(concert["artisti"]),
+                        ', '.join(place["tempo"]["data"]),
+                        place["posti"]["prezzo"],
+                        place["posti"]["numero_posti"],
+                        round(distance, 2)
+                    ])
+
         print(table)
         time.sleep(2)
     except Exception as e:
         print(f"Errore: {e}")
         time.sleep(2)
-
+        
 def exit_program():
     os.system('cls' if os.name == 'nt' else 'clear')
     print("uscita dal programma")
