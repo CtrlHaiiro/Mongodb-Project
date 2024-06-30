@@ -1,13 +1,10 @@
 import os
 import time
 from datetime import datetime
-
-import geojson
-from pymongo import MongoClient
 import re
 global collection
-from prettytable import PrettyTable
-from geopy.distance import geodesic
+import geojson
+from pymongo import MongoClient, GEOSPHERE
 
 
 def start_client():
@@ -17,7 +14,7 @@ def start_client():
         client = MongoClient("mongodb://localhost:27017/")
         db = client.get_database("Concerti")
         collection = db.get_collection("concerti")
-        collection.create_index([("luogo.coordinate", "2dsphere")])
+        collection.create_index([("luogo.coordinates", GEOSPHERE)])
 
         return collection
     except Exception as e:
@@ -115,6 +112,7 @@ def show_avariable_concerts(concerts):
         time.sleep(2)
         return show_avariable_concerts(concerts)
 
+
 def search_concert():
     os.system('cls' if os.name == 'nt' else 'clear')
     print("cerca per concerto")
@@ -165,7 +163,6 @@ def search_artist():
 def search_by_date():
     os.system('cls' if os.name == 'nt' else 'clear')
     print("Cerca per data")
-
     while True:
         try:
             data1 = input("Inserisci la prima data per trovare il concerto (Anno-Mese-Giorno): ")
@@ -176,59 +173,89 @@ def search_by_date():
         except ValueError:
             print("Errore: formato data non valido. Riprova!")
 
-    query = {"data": {"$gte": date1, "$lte": date2}}
+    date1_str = date1.strftime("%Y-%m-%d")
+    date2_str = date2.strftime("%Y-%m-%d")
+
+    query = {"luogo.tempo.data": {"$gte": date1_str, "$lte": date2_str}}
     results = list(collection.find(query))
 
     if results:
         choice = show_avariable_concerts(results)
         view_details(results[choice - 1])
-        choice = int(input("\n0 - Indietro\nSeleziona una concerto: \n"))
-        if choice!= 0:
-            purchase_page(results[choice - 1])
+
+        date_choice = int(input("\n0 - indietro\nseleziona una data: \n"))
+        if date_choice != 0:
+            purchase_page(results[choice-1])
         else:
-            time.sleep(1)
             return search_concert()
+
     else:
         print("Nessun concerto trovato in questo intervallo di date.")
-        time.sleep(2)
+        while True:
+            try:
+                choice = int(input("\n0 - Indietro\n1 - Riprova con altre date\nSeleziona una opzione: "))
+                if choice == 0:
+                    time.sleep(1)
+                    return
+                elif choice == 1:
+                    return search_by_date()
+                else:
+                    print("Scelta non valida. Riprova.")
+            except ValueError:
+                print("Errore: inserisci un numero valido.")
 
 
 def search_by_distance():
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("Ricerca per distanza")
+    print("cerca per distanza")
 
     try:
-        location = input("Inserisci la tua posizione attuale (latitudine, longitudine): ").split(',')
-        latitude = float(location[0])
-        longitude = float(location[1])
-        radius_km = 100  
-        
-        concerts = list(collection.find())
+        user_lat = float(input("Inserisci la tua latitudine: "))
+        user_lon = float(input("Inserisci la tua longitudine: "))
+        max_distance = float(7000)  # Distanza massima in metri
 
-        table = PrettyTable(["ID", "Nome", "Artisti", "Data", "Prezzo", "Biglietti Disponibili", "Distanza (km)"])
-
-        for concert in concerts:
-            for place in concert["luogo"]:
-                concert_location = (place["location"]["latitude"], place["location"]["longitude"])
-                user_location = (latitude, longitude)
-                distance = geodesic(concert_location, user_location).km
-                if distance <= radius_km:
-                    table.add_row([
-                        str(concert["_id"]),
-                        concert["nome"],
-                        ', '.join(concert["artisti"]),
-                        ', '.join(place["tempo"]["data"]),
-                        place["posti"]["prezzo"],
-                        place["posti"]["numero_posti"],
-                        round(distance, 2)
-                    ])
-
-        print(table)
-        time.sleep(2)
-    except Exception as e:
+        if not (-90 <= user_lat <= 90):
+            raise ValueError("Latitudine fuori dai limiti validi (-90 a 90).")
+        if not (-180 <= user_lon <= 180):
+            raise ValueError("Longitudine fuori dai limiti validi (-180 a 180).")
+    except ValueError as e:
         print(f"Errore: {e}")
         time.sleep(2)
-        
+        return search_by_distance()
+
+    user_location = geojson.Point((user_lon, user_lat))
+    query = {
+        "luogo.coordinates": {
+            "$near": {
+                "$geometry": {
+                    "type": "Point",
+                    "coordinates": [user_lon, user_lat]
+                },
+                "$maxDistance": max_distance
+            }
+        }
+    }
+    results = list(collection.find(query))
+
+    if results:
+        # Filtra i risultati per assicurarsi che le location abbiano posti disponibili
+        available_concerts = [result for result in results if result["luogo"][0]["posti"]["numero_posti"] > 0]
+        if available_concerts:
+            choice = show_avariable_concerts(available_concerts)
+            if choice == 0:
+                return search_by_distance()
+            view_details(available_concerts[choice - 1])
+            date_choice = int(input("\n0 - Indietro\nSeleziona una data: \n"))
+            if date_choice != 0:
+                purchase_page(available_concerts[choice - 1])
+        else:
+            print("Nessun concerto trovato vicino a te con biglietti disponibili.")
+            time.sleep(2)
+    else:
+        print("Nessun concerto trovato vicino a te.")
+        time.sleep(2)
+
+
 def exit_program():
     os.system('cls' if os.name == 'nt' else 'clear')
     print("uscita dal programma")
