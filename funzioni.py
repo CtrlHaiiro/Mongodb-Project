@@ -201,7 +201,7 @@ def search_by_distance():
         location = input("Inserisci la tua posizione attuale (latitudine, longitudine): ").split(',')
         latitude = float(location[0])
         longitude = float(location[1])
-        radius_km = 100  # Aumentato il raggio di ricerca a 100 km
+        radius_km = 100  
 
         concerts = list(collection.find())
         table = PrettyTable(["ID", "Nome", "Artista", "Data", "Prezzo", "Biglietti Disponibili", "Distanza (km)"])
@@ -221,8 +221,6 @@ def search_by_distance():
     except Exception as e:
         print(f"Errore: {e}")
         time.sleep(2)
-   
-
 
 def exit_program():
     os.system('cls' if os.name == 'nt' else 'clear')
