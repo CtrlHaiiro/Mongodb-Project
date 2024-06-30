@@ -3,7 +3,7 @@ import random
 import time
 from pymongo import MongoClient
 import re
-
+import json
 global collection
 
 
@@ -15,8 +15,8 @@ def start_client():
         db = client.get_database("Concerti")
         collection = db.get_collection("concerti")
         return collection
-    except Exception:
-        print(Exception)
+    except Exception as e:
+        print(f"Errore nella connessione a {e}")
 
 
 def view_details(event):
@@ -46,11 +46,20 @@ def purchase_page(event):
     os.system('cls' if os.name == 'nt' else 'clear')
     print("purchase_page\n")
     print(event["nome"])
+    event_id = event["_id"]
     seats = event["luogo"][0]["posti"]
-    name_seats= seats["posti"]
-    print(name_seats)
+    if seats is None:
+        print("nessun biglietto disponibile")
+        time.sleep(2)
+        return purchase_page(event)
+    name_seats = seats["posti"]
 
-    num_biglietti = int(input("inserisci il numero biglietti da acquistare: "))
+    try:
+        num_biglietti = int(input("inserisci il numero biglietti da acquistare: "))
+    except ValueError:
+        print("inserisci un numero valido")
+        time.sleep(2)
+        return purchase_page(event)
 
     choice = int(input(f"il prezzo totale per {num_biglietti} biglietti e': {seats['prezzo'] * num_biglietti} €\n"
                        f"- 1 per effettuare l'acquisto\n"
@@ -60,19 +69,20 @@ def purchase_page(event):
         return purchase_page(event)
 
     elif choice == 1:
-        print("da implementare\n")
-        selected_seats = seats["posti"][:num_biglietti]
+        selected_seats = name_seats[:num_biglietti]
         new_list = [x for x in name_seats if x not in selected_seats]
-        print(new_list)
-        for seat in selected_seats:
-            print(collection.find_one({"nome": event["nome"]}))
-            collection.update_one({"nome": event["nome"]},
-                                  {"$set": {f"luogo.0.posti.posti.{seat}": new_list}})
-            collection.update_one({"nome": event["nome"]},
-                                  {"$set": {f"luogo.0.posti.numero_posti": len(seats["posti"]) - num_biglietti}})
-        print("acquisto effettuato con successo")
-        time.sleep(2)
-        return
+        collection.update_one({"_id": event_id},
+                          {"$set": {f"luogo.0.posti.posti": new_list}})
+
+    # Aggiorna il numero di posti rimanenti per l'evento trovato
+        collection.update_one({"_id": event_id},
+                          {"$set": {f"luogo.0.posti.numero_posti": int(len(seats["posti"]) - num_biglietti)}})
+
+        print(f"acquisto effettuato con successo\n"
+              f"I posti acquistati sono: {[seat for seat in selected_seats]}")
+    else:
+        print("scelta non valida")
+        return purchase_page(event)
 
     time.sleep(2)
     return
@@ -82,20 +92,23 @@ def show_avariable_concerts(concerts):
     print(f"concerti disponibili: \n"
           f"{len(concerts)} risultati trovati\n")
     for i, concert in enumerate(concerts):
-        print(
-            f"{i + 1} - {concert["nome"]}  ")
-    choice = int(input("\ninserisci il numero del concerto \n"
+        print( str(i+1) + " - " + concert["nome"] )
+    try:
+        choice = int(input("\ninserisci il numero del concerto \n"
                        "per visualizzare i dettagli ( 0 per tornare indietro ) : "))
-    if choice == 0:
-        return search_concert()
-    else:
-        return choice
+        if choice == 0:
+            return search_concert()
+        else:
+            return choice
 
+    except ValueError:
+        print("inserisci un numero valido")
+        time.sleep(2)
+        return show_avariable_concerts(concerts)
 
 def search_concert():
     os.system('cls' if os.name == 'nt' else 'clear')
     print("cerca per concerto")
-    query = {}
     concert = str(input("inserisci il nome del concerto: ")).capitalize()
     regex_pattern = re.compile(f".*{re.escape(concert)}.*", re.IGNORECASE)
 
@@ -104,9 +117,9 @@ def search_concert():
     if results:
         choice = show_avariable_concerts(results)
         view_details(results[choice - 1])
-        choice = int(input("\n0 - indietro\nseleziona una data: \n"))
-        if choice != 0:
-            purchase_page(results[choice])
+        date_choice = int(input("\n0 - indietro\nseleziona una data: \n"))
+        if date_choice != 0:
+            purchase_page(results[choice-1])
         else:
             return search_concert()
 
@@ -120,6 +133,24 @@ def search_concert():
 def search_artist():
     os.system('cls' if os.name == 'nt' else 'clear')
     print("cerca per artista")
+    query = {}
+    artist = str(input("inserisci il nome del artista/band: ")).capitalize()
+    regex_pattern = re.compile(f".*{re.escape(artist)}.*", re.IGNORECASE)
+
+    query = {"artisti": {"$regex": regex_pattern}}
+    results = list(collection.find(query))
+    if results:
+        choice = show_avariable_concerts(results)
+        view_details(results[choice - 1])
+        choice = int(input("\n0 - indietro\nseleziona una data: \n"))
+        if choice != 0:
+            purchase_page(results[choice])
+        else:
+            return search_artist()
+    else:
+        print("Nessun artista trovato con questo nome.")
+        time.sleep(2)
+
     time.sleep(1)
 
 
