@@ -22,17 +22,6 @@ def generate_random_event():
                     "posti": seats,
                     "numero_posti": len(seats),
                 }},
-            {
-                "tempo": generate_random_tempo(),
-                "locale": generate_random_locale(),
-                "citta": generate_random_city(),
-                "coordinates": {"type": "Point", "coordinates": generate_random_coordinates()},
-                "posti": {
-                    "prezzo": random.randint(40, 100),
-                    "posti": seats,
-                    "numero_posti": len(seats),
-                },
-            },
         ],
     }
     return event
@@ -204,7 +193,7 @@ def generate_random_seats():
 
 # Genera un evento casuale e lo stampa come JSON
 eventi = []
-for i in range(1, 15):
+for i in range(1, 30):
     eventi.append(generate_random_event())
 
 with open('database.json', 'w') as file:
